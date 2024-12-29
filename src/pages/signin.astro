@@ -1,0 +1,44 @@
+---
+import { SESSION_COOKIE, createAdminClient } from "../server/appwrite";
+import { ID } from "node-appwrite";
+
+const { user } = Astro.locals;
+if (user) {
+  return Astro.redirect("/account");
+}
+
+if (Astro.request.method === "POST") {
+  // Extract the form data
+  const data = await Astro.request.formData();
+  const email = data.get("email");
+  const password = data.get("password");
+  const name = data.get("name");
+
+  // Create the admin client
+  const { account } = createAdminClient();
+
+  // Create the email password session
+  await account.create(ID.unique(), email, password, name);
+  const session = await account.createEmailPasswordSession(email, password);
+
+  // Set the session cookie
+  Astro.cookies.set(SESSION_COOKIE, session.secret, {
+    path: "/",
+    expires: new Date(session.expire),
+    sameSite: "strict",
+    secure: true,
+    httpOnly: true,
+  });
+
+  // Redirect to the account page
+  return Astro.redirect("/account");
+}
+
+---
+
+<form method="POST">
+  <input id="email" name="email" placeholder="Email" type="email" />
+  <input id="password" name="password" placeholder="Password" type="password" />
+  <input id="name" name="name" placeholder="Name" type="text" />
+  <button type="submit"> Sign up</button>
+</form>
