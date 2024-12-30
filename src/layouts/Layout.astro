@@ -1,4 +1,5 @@
 ---
+import ThemeToggle from '../components/ThemeToggle.astro';
 const { user } = Astro.locals;
 ---
 
@@ -11,21 +12,29 @@ const { user } = Astro.locals;
 		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
 		<title>PicFusion</title>
+		<script is:inline>
+			// On page load or when changing themes, best to add inline in `head` to avoid FOUC
+			if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+				document.documentElement.classList.add('dark');
+			} else {
+				document.documentElement.classList.remove('dark');
+			}
+		</script>
 	</head>
-	<body class="min-h-screen bg-gray-50">
-		<nav class="bg-white shadow-sm">
+	<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+		<nav class="bg-white dark:bg-gray-800 shadow-sm">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div class="flex justify-between h-16">
 					<div class="flex-shrink-0 flex items-center">
-						<a href="/" class="text-2xl font-bold text-gray-900">
+						<a href="/" class="text-2xl font-bold text-gray-900 dark:text-white">
 							<img src="/logofusion.png" width="60" height="60" alt="PicFusion" class="rounded-md" />
 						</a>
 					</div>
 					<div class="hidden sm:flex sm:items-center sm:space-x-4">
 						{user ? (
 							<>
-							<p>Welcome, {user.name}! </p>
-								<a href="/account" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+								<p class="text-gray-700 dark:text-gray-300">Welcome, {user.name}! </p>
+								<a href="/account" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
 									Account
 								</a>
 								<form method="POST" action="/account" class="m-0">
@@ -36,7 +45,7 @@ const { user } = Astro.locals;
 							</>
 						) : (
 							<>
-								<a href="/signin" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+								<a href="/signin" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
 									Sign In
 								</a>
 								<a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium">
@@ -44,11 +53,12 @@ const { user } = Astro.locals;
 								</a>
 							</>
 						)}
+						<ThemeToggle class="ml-4" />
 					</div>
 				</div>
 			</div>
 		</nav>
-		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-gray-900 dark:text-gray-100">
 			<slot />
 		</main>
 	</body>
