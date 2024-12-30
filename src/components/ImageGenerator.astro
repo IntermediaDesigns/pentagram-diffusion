@@ -1,0 +1,88 @@
+---
+---
+
+<script>
+  const generateForm = document.getElementById('generateForm') as HTMLFormElement;
+  const generationStatus = document.getElementById('generationStatus');
+  const previewContainer = document.getElementById('previewContainer');
+  const previewImage = document.getElementById('previewImage') as HTMLImageElement;
+  const errorMessage = document.getElementById('errorMessage');
+
+  if (!generateForm || !generationStatus || !previewContainer || !previewImage || !errorMessage) {
+    console.error('Required elements not found');
+    throw new Error('Required elements not found');
+  }
+
+  generateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(generateForm);
+    const prompt = formData.get('prompt');
+    
+    generationStatus.classList.remove('hidden');
+    previewContainer.classList.add('hidden');
+    errorMessage.classList.add('hidden');
+    
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        previewImage.src = result.imageUrl;
+        previewContainer.classList.remove('hidden');
+        // Trigger gallery refresh after successful generation
+        window.dispatchEvent(new CustomEvent('refreshGallery'));
+      } else {
+        throw new Error(result.error || 'Failed to generate image');
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      const errorMsg = error instanceof Error ? error.message : 'An unknown error occurred';
+      errorMessage.textContent = errorMsg;
+      errorMessage.classList.remove('hidden');
+    } finally {
+      generationStatus.classList.add('hidden');
+    }
+  });
+</script>
+
+<div class="bg-white p-6 rounded-lg shadow-md space-y-6">
+  <h2 class="text-xl font-semibold mb-4">Generate New Image</h2>
+  <form id="generateForm" class="space-y-4">
+    <div>
+      <label for="prompt" class="block text-sm font-medium text-gray-700">Text Prompt</label>
+      <textarea
+        id="prompt"
+        name="prompt"
+        rows="3"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        placeholder="Describe the image you want to generate..."
+        required
+      ></textarea>
+    </div>
+    <button
+      type="submit"
+      class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+    >
+      Generate Image
+    </button>
+  </form>
+  <div id="generationStatus" class="mt-4 hidden">
+    <div class="animate-pulse text-gray-600">Generating your image... This may take a few moments.</div>
+  </div>
+  
+  <div id="errorMessage" class="mt-4 hidden text-red-600"></div>
+  
+  <div id="previewContainer" class="mt-4 hidden">
+    <h3 class="text-lg font-medium mb-2">Preview</h3>
+    <div class="relative aspect-square max-w-lg mx-auto">
+      <img id="previewImage" class="rounded-lg shadow-lg w-full h-full object-cover" alt="Generated preview" />
+    </div>
+  </div>
+</div>
