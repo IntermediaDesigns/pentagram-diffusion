@@ -1,6 +1,6 @@
 // src/server/appwrite.js
 
-import { Client, Account } from "node-appwrite";
+import { Client, Account, Storage, Databases } from "node-appwrite";
 
 // The name of your cookie that will store the session
 export const SESSION_COOKIE = "my-custom-session";
@@ -16,6 +16,12 @@ export function createAdminClient() {
   return {
     get account() {
       return new Account(client);
+    },
+    get storage() {
+      return new Storage(client);
+    },
+    get databases() {
+      return new Databases(client);
     },
   };
 }
@@ -39,6 +45,12 @@ export function createSessionClient(request) {
   return {
     get account() {
       return new Account(client);
+    },
+    get storage() {
+      return new Storage(client);
+    },
+    get databases() {
+      return new Databases(client);
     },
   };
 }

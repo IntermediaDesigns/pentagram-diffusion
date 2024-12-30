@@ -1,86 +1,85 @@
-import { Client, Databases, Query } from 'node-appwrite';
+import { createSessionClient } from "../../server/appwrite.js";
+import { Query } from "node-appwrite";
 
-// Initialize Appwrite client
-const client = new Client()
-  .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT)
-  .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID);
-
-const databases = new Databases(client);
-
-export async function get({ request }) {
+export const GET = async ({ request }) => {
   try {
-    // Get images from Appwrite database
+    // Get Appwrite client
+    const { databases } = createSessionClient(request);
+
+    // Get images from database
     const response = await databases.listDocuments(
-      process.env.PUBLIC_APPWRITE_DATABASE_ID,
-      process.env.PUBLIC_APPWRITE_IMAGES_COLLECTION_ID,
-      [
-        Query.orderDesc('$createdAt'),
-        Query.limit(20)
-      ]
+      import.meta.env.PUBLIC_APPWRITE_DATABASE_ID,
+      import.meta.env.PUBLIC_APPWRITE_IMAGES_COLLECTION_ID,
+      [Query.orderDesc("$createdAt"), Query.limit(20)]
     );
 
-    // Transform the data to include necessary fields
-    const images = response.documents.map(doc => ({
-      id: doc.$id,
-      url: doc.imageUrl,
-      prompt: doc.prompt,
-      createdAt: doc.$createdAt,
-      likes: doc.likes || 0,
-      comments: doc.comments || [],
-      userId: doc.userId,
-    }));
-
-    return new Response(JSON.stringify(images), {
+    return new Response(JSON.stringify(response.documents), {
       status: 200,
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     });
   } catch (error) {
-    console.error('Error fetching images:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json'
+    console.error("Error fetching images:", error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message || "An unknown error occurred",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   }
 }
 
-// Handle likes
-export async function post({ request }) {
+export const POST = async ({ request }) => {
   try {
     const { imageId, action } = await request.json();
-    
-    if (action === 'like') {
+
+    // Get Appwrite client
+    const { databases } = createSessionClient(request);
+
+    if (action === "like") {
+      // First get the current document to get the current likes count
+      const doc = await databases.getDocument(
+        import.meta.env.PUBLIC_APPWRITE_DATABASE_ID,
+        import.meta.env.PUBLIC_APPWRITE_IMAGES_COLLECTION_ID,
+        imageId
+      );
+
+      // Update with incremented likes
       await databases.updateDocument(
-        process.env.PUBLIC_APPWRITE_DATABASE_ID,
-        process.env.PUBLIC_APPWRITE_IMAGES_COLLECTION_ID,
+        import.meta.env.PUBLIC_APPWRITE_DATABASE_ID,
+        import.meta.env.PUBLIC_APPWRITE_IMAGES_COLLECTION_ID,
         imageId,
         {
-          likes: Query.increment(1)
+          likes: (doc.likes || 0) + 1,
         }
       );
     }
-    
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     });
   } catch (error) {
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json'
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message || "An unknown error occurred",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   }
 }

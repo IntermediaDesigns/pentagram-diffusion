@@ -1,0 +1,51 @@
+---
+---
+
+<script>
+  const canvas = document.getElementById('watermark') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d');
+
+  function updateWatermark() {
+    if (!canvas || !ctx) return;
+
+    // Update canvas dimensions
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Configure watermark text
+    const text = 'MedHelp • ' + new Date().toLocaleString();
+    ctx.font = '14px Arial';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.textBaseline = 'middle';
+
+    // Calculate text metrics
+    const metrics = ctx.measureText(text);
+    const textWidth = metrics.width;
+
+    // Draw watermark pattern
+    for (let y = -canvas.height; y < canvas.height * 2; y += 100) {
+      for (let x = -canvas.width; x < canvas.width * 2; x += textWidth + 100) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-45 * Math.PI / 180);
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+      }
+    }
+  }
+
+  // Update watermark on load and window resize
+  window.addEventListener('load', updateWatermark);
+  window.addEventListener('resize', updateWatermark);
+
+  // Update watermark every minute to keep timestamp current
+  setInterval(updateWatermark, 60000);
+</script>
+
+<canvas
+  id="watermark"
+  class="pointer-events-none fixed inset-0 z-50 opacity-50 mix-blend-overlay"
+></canvas>

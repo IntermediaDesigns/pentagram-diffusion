@@ -3,10 +3,11 @@ import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/Sidebar.astro';
 import ImageGenerator from '../components/ImageGenerator.astro';
 import ImageGallery from '../components/ImageGallery.astro';
+import DynamicWatermark from '../components/DynamicWatermark.astro';
 ---
 
-<Layout title="Dashboard - Pentagram Diffusion">
-  <div class="flex min-h-screen bg-gray-100">
+<Layout title="Dashboard - PicFusion">
+  <div class="flex min-h-screen bg-gray-100 relative">
     <Sidebar />
     <main class="flex-1 p-6">
       <h1 class="text-3xl font-bold mb-8">Image Generation Dashboard</h1>
@@ -15,5 +16,6 @@ import ImageGallery from '../components/ImageGallery.astro';
         <ImageGallery />
       </div>
     </main>
+    <DynamicWatermark />
   </div>
 </Layout>
