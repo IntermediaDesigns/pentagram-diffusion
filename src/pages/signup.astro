@@ -1,5 +1,6 @@
 ---
 import { SESSION_COOKIE, createAdminClient } from "../server/appwrite";
+import { ID } from "node-appwrite";
 import Layout from "../layouts/Layout.astro";
 
 const { user } = Astro.locals;
@@ -14,12 +15,15 @@ if (Astro.request.method === "POST") {
     const data = await Astro.request.formData();
     const email = data.get("email")?.toString();
     const password = data.get("password")?.toString();
+    const name = data.get("name")?.toString();
 
-    if (!email || !password) {
-      throw new Error("Email and password are required");
+    if (!email || !password || !name) {
+      throw new Error("Missing required fields");
     }
 
     const { account } = createAdminClient();
+
+    await account.create(ID.unique(), email, password, name);
     const session = await account.createEmailPasswordSession(email, password);
 
     Astro.cookies.set(SESSION_COOKIE, session.secret, {
@@ -32,26 +36,39 @@ if (Astro.request.method === "POST") {
 
     return Astro.redirect("/account");
   } catch (e) {
-    error = "Invalid email or password";
+    error = "Failed to create account. Please try again.";
   }
 }
 ---
 
-<Layout title="Sign In">
+<Layout title="Sign Up">
   <main class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
+          Create your account
         </h2>
       </div>
       <form class="mt-8 space-y-6" method="POST">
-        {error && (
-          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
+        {
+          error && (
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )
+        }
         <div class="rounded-md shadow-sm space-y-4">
+          <div>
+            <label for="name" class="sr-only">Full Name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Full Name"
+            />
+          </div>
           <div>
             <label for="email" class="sr-only">Email address</label>
             <input
@@ -81,12 +98,15 @@ if (Astro.request.method === "POST") {
             type="submit"
             class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Sign in
+            Sign up
           </button>
         </div>
         <div class="text-center">
-          <a href="/signup" class="text-sm text-indigo-600 hover:text-indigo-500">
-            Don't have an account? Sign up
+          <a
+            href="/signin"
+            class="text-sm text-indigo-600 hover:text-indigo-500"
+          >
+            Already have an account? Sign in
           </a>
         </div>
       </form>
