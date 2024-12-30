@@ -18,8 +18,8 @@ if (Astro.request.method === "POST") {
   // Delete the session cookie
   Astro.cookies.delete(SESSION_COOKIE);
 
-  // Redirect the user to sign up page
-  return Astro.redirect("/signup");
+  // Redirect the user to home page
+  return Astro.redirect("/");
 }
 ---
 <ul>
