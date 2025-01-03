@@ -4,7 +4,9 @@ import { ID } from "node-appwrite";
 
 const hf = new HfInference(import.meta.env.HUGGINGFACE_API_KEY);
 
-export const post = async ({ request }) => {
+export const prerender = false;
+
+export async function POST({ request, locals }) {
   try {
     const { prompt } = await request.json();
 
@@ -20,10 +22,7 @@ export const post = async ({ request }) => {
     const buffer = Buffer.from(arrayBuffer);
 
     // Get Appwrite client
-    const { storage, databases, account } = createSessionClient(request);
-
-    // Get current user
-    const user = await account.get();
+    const { storage, databases } = createSessionClient(request);
 
     // Upload image to Appwrite Storage
     const file = await storage.createFile(
@@ -39,7 +38,7 @@ export const post = async ({ request }) => {
       import.meta.env.PUBLIC_APPWRITE_IMAGES_COLLECTION_ID,
       ID.unique(),
       {
-        userId: user.$id,
+        userId: locals.user.$id,
         prompt,
         imageUrl: storage.getFileView(
           import.meta.env.PUBLIC_APPWRITE_STORAGE_BUCKET_ID,
@@ -49,35 +48,31 @@ export const post = async ({ request }) => {
       }
     );
 
-    return new Response(
-      JSON.stringify({
+      return new Response(JSON.stringify({
         success: true,
         imageId: document.$id,
         imageUrl: storage.getFileView(
           import.meta.env.PUBLIC_APPWRITE_STORAGE_BUCKET_ID,
           file.$id
         ),
-      }),
-      {
+      }), {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-        },
-      }
-    );
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
   } catch (error) {
     console.error("Error generating image:", error);
-    return new Response(
-      JSON.stringify({
+      return new Response(JSON.stringify({
         success: false,
         error: error.message || "An unknown error occurred",
-      }),
-      {
+      }), {
         status: 500,
         headers: {
           "Content-Type": "application/json",
-        },
-      }
-    );
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
   }
 };

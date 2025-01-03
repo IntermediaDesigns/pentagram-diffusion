@@ -46,7 +46,11 @@
         // Trigger gallery refresh after successful generation
         window.dispatchEvent(new CustomEvent("refreshGallery"));
       } else {
-        throw new Error(result.error || "Failed to generate image");
+        if (response.status === 401) {
+          throw new Error("Please sign in to generate images. You can sign in using the button in the top right.");
+        } else {
+          throw new Error(result.error || "Failed to generate image");
+        }
       }
     } catch (error) {
       console.error("Error generating image:", error);
