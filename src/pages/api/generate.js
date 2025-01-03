@@ -11,15 +11,13 @@ export async function POST({ request, locals }) {
     const { prompt } = await request.json();
 
     // Generate image using FLUX.1-dev model
-    const response = await hf.textToImage({
+    const imageBytes = await hf.textToImage({
       model: "black-forest-labs/FLUX.1-dev",
       inputs: prompt,
     });
 
-    // Convert blob to buffer
-    const imageBlob = await response.blob();
-    const arrayBuffer = await imageBlob.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    // Convert image bytes to buffer
+    const buffer = Buffer.from(imageBytes);
 
     // Get Appwrite client
     const { storage, databases } = createSessionClient(request);
