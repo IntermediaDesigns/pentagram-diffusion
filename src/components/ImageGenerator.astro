@@ -38,20 +38,24 @@
         body: JSON.stringify({ prompt }),
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        previewImage.src = result.imageUrl;
-        previewContainer.classList.remove("hidden");
-        // Trigger gallery refresh after successful generation
-        window.dispatchEvent(new CustomEvent("refreshGallery"));
-      } else {
+      if (!response.ok) {
+        const result = await response.json();
         if (response.status === 401) {
           throw new Error("Please sign in to generate images. You can sign in using the button in the top right.");
         } else {
-          throw new Error(result.error || "Failed to generate image");
+          throw new Error(result.error || `Failed to generate image: ${response.statusText}`);
         }
       }
+
+      const result = await response.json();
+      if (!result.success || !result.imageUrl) {
+        throw new Error(result.error || "Failed to generate image: No image URL returned");
+      }
+
+      previewImage.src = result.imageUrl;
+      previewContainer.classList.remove("hidden");
+      // Trigger gallery refresh after successful generation
+      window.dispatchEvent(new CustomEvent("refreshGallery"));
     } catch (error) {
       console.error("Error generating image:", error);
       errorMessage.textContent = error.message || "An unknown error occurred";
