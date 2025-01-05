@@ -32,7 +32,6 @@ export const GET = async ({ request }) => {
     });
   } catch (error) {
     console.error("Error fetching images:", error);
-    console.error("Error fetching images:", error);
     // Return empty array instead of error for GET requests
     return new Response(JSON.stringify([]), {
       status: 200,
