@@ -3,8 +3,19 @@ import { Query } from "node-appwrite";
 
 export const GET = async ({ request }) => {
   try {
-    // Get Appwrite client
-    const { databases } = createSessionClient(request);
+    // Get Appwrite client - don't require authentication for viewing images
+    let databases;
+    try {
+      ({ databases } = createSessionClient(request));
+    } catch (error) {
+      console.warn("No authentication for image viewing");
+      return new Response(JSON.stringify([]), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
 
     // Get images from database
     const response = await databases.listDocuments(
@@ -21,18 +32,14 @@ export const GET = async ({ request }) => {
     });
   } catch (error) {
     console.error("Error fetching images:", error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || "An unknown error occurred",
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    console.error("Error fetching images:", error);
+    // Return empty array instead of error for GET requests
+    return new Response(JSON.stringify([]), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   }
 }
 
@@ -40,8 +47,21 @@ export const POST = async ({ request }) => {
   try {
     const { imageId, action } = await request.json();
 
-    // Get Appwrite client
-    const { databases } = createSessionClient(request);
+    // Get Appwrite client - require authentication for actions
+    let databases;
+    try {
+      ({ databases } = createSessionClient(request));
+    } catch (error) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Authentication required for this action"
+      }), {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
 
     if (action === "like") {
       // First get the current document to get the current likes count
